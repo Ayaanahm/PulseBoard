@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: pulseboard }
+    ports: ["5432:5432"]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "postgres"], interval: 2s, retries: 20 }
+  migrate:
+    build: { context: ., target: worker }
+    command: sh -c "npx tsx scripts/migrate.ts && npx tsx scripts/seed.ts"
+    environment: { MIGRATION_DATABASE_URL: postgres://postgres:postgres@db:5432/pulseboard }
+    depends_on: { db: { condition: service_healthy } }
+  web:
+    build: { context: ., target: web }
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: postgres://app_user:app_password@db:5432/pulseboard
+      AUTH_SECRET: dev-secret-change-me-dev-secret-change-me
+      AUTH_URL: http://localhost:3000
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  worker:
+    build: { context: ., target: worker }
+    environment: { DATABASE_URL: "postgres://app_user:app_password@db:5432/pulseboard", WORKER_INTERVAL_MS: "15000" }
+    depends_on: { migrate: { condition: service_completed_successfully } }

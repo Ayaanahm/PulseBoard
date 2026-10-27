@@ -1,0 +1,6 @@
+aws_region      = "ap-south-1"
+github_repo     = "your-github-user/pulseboard"
+domain_name     = "" # e.g. "app.example.com"
+route53_zone_id = ""
+oidc_issuer     = "https://your-tenant.us.auth0.com/"
+oidc_client_id  = ""
